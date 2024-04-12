@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake World</title>
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/Deepak-Varshney/snakeGame/main/style.css">
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=New+Tegomin&display=swap');
+    
+    * {
+    padding: 0;
+    margin: 0;
+    }
+    
+    .body {
+    background: url("./bg.jpg");
+    background-repeat: no-repeat;
+    background-size: 100vw 100vh;
+    background-size: cover;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    width: 100%;
+    /* gap: 40vw; */
+    }
+    
+    #board {
+    background: linear-gradient(rgb(253, 232, 126), rgb(255, 117, 62));
+    background: url("https://as2.ftcdn.net/v2/jpg/02/43/94/61/1000_F_243946196_6BHscjKyxmepQD7LgDTiZmTuSI6W7o63.jpg");
+    /* background: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVv41f2iRwr_P3MK3144LOJUqQ29-XdiG_nQ&s"); */
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 92vmin;
+    border: 3px solid;
+    width: 90vmin;
+    display: grid;
+    grid-template-columns: repeat(18, 1fr);
+    grid-template-rows: repeat(18, 1fr);
+    }
+    
+    .head {
+    border-radius: 50px;
+    background: url(./head.png);
+    /* background: url(food.png); */
+    /* background: url("https://www.instagram.com/p/CPJMseinflX/"); */
+    background-repeat: no-repeat;
+    scale: 1.35;
+    background-size: cover;
+    
+    }
+    
+    .snake {
+    background: url(body.png);
+    background-color: blue;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: 50px;
+    }
+    
+    .food {
+    background: url(food.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+    scale: 1.3;
+    border-radius: 50px;
+    }
+    </style>
+</head>
+<body>
+    <div class="body">
+        <div id="board"></div>
+    </div>
+</body>
+<script>
+    // game constants & variable
+// const playWithMusic = confirm("Do you want to play with music?");
+let inputDir = { x: 0, y: 0 };
+const foodSound = new Audio("food.mp3");
+const gameOverSound = new Audio("gameover.mp3");
+const moveSound = new Audio("move.mp3");
+// const music = new Audio("music.mp3");
+// if (playWithMusic==true) {
+//     music.play();
+// }
+const board = document.getElementById("board");
+let speed = 3;
+let lastPaintTime = 0;
+let score = 0;
+let snakeArr = [
+    { x: 13, y: 15 }
+];
+
+let food = { x: 6, y: 7 };
+// game functions
+function main(ctime) {
+    window.requestAnimationFrame(main);
+    if ((ctime - lastPaintTime) / 1000 < 1 / speed) {
+        return;
+    }
+    lastPaintTime = ctime;
+    gameEngine();
+}
+function isCollide(snake) {
+    for (let i = 1; i < snakeArr.length; i++) {
+        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
+            return true;
+        }
+    }
+    if (snake[0].x >= 18 || snake[0].x <= 0 || snake[0].y >= 18 || snake[0].y <= 0) {
+        return true;
+    }
+
+    return false;
+}
+
+function gameEngine() {
+    // part 1 updating the snake array
+    if (isCollide(snakeArr)) {
+        gameOverSound.play();
+        inputDir = { x: 0, y: 0 };
+        alert("GameOver! Press any key to play again");
+        snakeArr = [{ x: 13, y: 15 }];
+        score = 0;
+    }
+
+    // if you have eaten the food, increment the score and re-generate the food
+    if (snakeArr[0].y === food.y && snakeArr[0].x === food.x) {
+        foodSound.currentTime = 0;
+        foodSound.play();
+        score += 1;
+        snakeArr.unshift({ x: snakeArr[0].x + inputDir.x, y: snakeArr[0].y + inputDir.y });
+        let a = 2;
+        let b = 16;
+        food = { x: Math.round(a + (b - a) * Math.random()), y: Math.round(a + (b - a) * Math.random()) };
+    }
+
+    // Moving the snake
+    for (let i = snakeArr.length - 2; i >= 0; i--) {
+        snakeArr[i + 1] = { ...snakeArr[i] };
+    }
+    snakeArr[0].x += inputDir.x;
+    snakeArr[0].y += inputDir.y;
+    // part 2 render the snake and food
+    // Display the snake
+    board.innerHTML = "";
+    snakeArr.forEach((e, index) => {
+        snakeElement = document.createElement("div");
+        snakeElement.style.gridRowStart = e.y;
+        snakeElement.style.gridColumnStart = e.x;
+        if (index === 0) {
+            snakeElement.classList.add("head");
+        }
+        else {
+            snakeElement.classList.add("snake");
+        }
+        board.appendChild(snakeElement);
+    });
+    // Display the food
+    snakefood = document.createElement("div");
+    snakefood.style.gridRowStart = food.y;
+    snakefood.style.gridColumnStart = food.x;
+    snakefood.classList.add("food");
+    board.appendChild(snakefood);
+}
+
+
+
+
+
+
+// main logic starts here
+window.requestAnimationFrame(main);
+window.addEventListener("keydown", (e) => {
+    inputDir = { x: 0, y: 0 };
+    // inputDir = { x: 0, y: 1 }
+    moveSound.currentTime = 0;
+    // moveSound.play();
+    switch (e.key) {
+        case "ArrowUp":
+            moveSound.currentTime = 0;
+            moveSound.play();
+            inputDir.x = 0;
+            inputDir.y = -1;
+            // console.log("ArrowUp");
+            break;
+        case "ArrowDown":
+            moveSound.currentTime = 0;
+            moveSound.play();
+            inputDir.x = 0;
+            inputDir.y = 1;
+            // console.log("ArrowDown");
+            break;
+        case "ArrowLeft":
+            moveSound.currentTime = 0;
+            moveSound.play();
+            inputDir.x = -1;
+            inputDir.y = 0;
+            // console.log("ArrowLeft");
+            break;
+        case "ArrowRight":
+            moveSound.currentTime = 0;
+            moveSound.play();
+            inputDir.y = 0;
+            inputDir.x = 1;
+            // console.log("ArrowRight");
+            break;
+        default:
+            break;
+    }
+
+});
+window.addEventListener("touchstart", handleTouchStart, false);
+window.addEventListener("touchmove", handleTouchMove, false);
+
+let xDown = null;
+let yDown = null;
+
+function handleTouchStart(event) {
+    const firstTouch = event.touches[0];
+    xDown = firstTouch.clientX;
+    yDown = firstTouch.clientY;
+}
+
+function handleTouchMove(event) {
+    if (!xDown || !yDown) {
+        return;
+    }
+
+    let xUp = event.touches[0].clientX;
+    let yUp = event.touches[0].clientY;
+
+    let xDiff = xDown - xUp;
+    let yDiff = yDown - yUp;
+
+    if (Math.abs(xDiff) > Math.abs(yDiff)) { // horizontal swipe
+        if (xDiff > 0) {
+            // Swipe left
+            inputDir.x = -1;
+            inputDir.y = 0;
+        } else {
+            // Swipe right
+            inputDir.x = 1;
+            inputDir.y = 0;
+        }
+    } else { // vertical swipe
+        if (yDiff > 0) {
+            // Swipe up
+            inputDir.x = 0;
+            inputDir.y = -1;
+        } else {
+            // Swipe down
+            inputDir.x = 0;
+            inputDir.y = 1;
+        }
+    }
+    // Reset touch position variables
+    xDown = null;
+    yDown = null;
+}
+function handleTouchMove(event) {
+    event.preventDefault(); // Prevent default scrolling behavior
+
+    if (!xDown || !yDown) {
+        return;
+    }
+
+    let xUp = event.touches[0].clientX;
+    let yUp = event.touches[0].clientY;
+
+    let xDiff = xDown - xUp;
+    let yDiff = yDown - yUp;
+
+    if (Math.abs(xDiff) > Math.abs(yDiff)) { // horizontal swipe
+        if (xDiff > 0) {
+            // Swipe left
+            inputDir.x = -1;
+            inputDir.y = 0;
+        } else {
+            // Swipe right
+            inputDir.x = 1;
+            inputDir.y = 0;
+        }
+    } else { // vertical swipe
+        event.preventDefault();
+        if (yDiff > 0) {
+            // Swipe up
+            inputDir.x = 0;
+            inputDir.y = -1;
+        } else {
+            // Swipe down
+            inputDir.x = 0;
+            inputDir.y = 1;
+        }
+    }
+    // Reset touch position variables
+    xDown = null;
+    yDown = null;
+}
+// Add event listener for touchmove directly to the .body element
+document.querySelector('.body').addEventListener('touchmove', function (event) {
+    event.preventDefault(); // Prevent default touch action
+});
+
+</script>
+</html>
